@@ -1,5 +1,5 @@
 <jitterpass>
-    <pass name="ReSTIR">
+    <pass name="ReSTIR" jitpos="1">
 
 //***************************************************//
 //               PREPARE THE BUFFERS                 //
@@ -35,7 +35,7 @@
         //reproject previous direct+inderect
         <subpass name="image" subpass file="past_frame_reprojection.jxs" inputs="3">
             <input source="COLOR" />
-            <input subpass="composite" output="1" history="1" /> //***make sure this is the right outlet
+            <input subpass="composite" output="1" history="1" /> 
             <input source="VELOCITY" />
         </subpass>
 
@@ -221,7 +221,7 @@
         //resolve specular ReSTIR
         <subpass name="specular" subpass file="ReSTIR_resolve_REF.jxs" inputs="8">
             <input source="COLOR" />
-            <input subpass="spatial_reuse_REF_2" />
+            <input subpass="spatial_reuse_REF_2" output="0" />
             <input subpass="half_res_col" />
             <input subpass="half_res_nor_depth" />
             <input subpass="half_res_vel" />
