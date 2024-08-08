@@ -1,0 +1,254 @@
+<jitterpass>
+    <pass name="ReSTIR">
+
+//***************************************************//
+//               PREPARE THE BUFFERS                 //
+//***************************************************//
+
+        //dummy pass to create a half-res texture
+        <subpass name="half_res" subpass file="through.jxs" inputs="1" dimscale="0.5 0.5">
+            <input source="COLOR" />
+        </subpass>
+
+        //fill depth buffer's background with the value 1
+        <subpass name="nor_depth" subpass file="fill_depth_background.jxs" inputs="1">
+            <input source="NORMALS" />
+        </subpass>
+
+        //downscale normals and depth
+        <subpass name="half_res_nor_depth" subpass file="downscale.jxs" inputs="2">
+            <input subpass="half_res" />
+            <input source="NORMALS" />
+        </subpass>  
+
+        //downscale velocity
+        <subpass name="half_res_vel" subpass file="downscale.jxs" inputs="2">
+            <input subpass="half_res" />
+            <input source="VELOCITY" />
+        </subpass>   
+
+        //calc half-res view space position
+        <subpass name="half_res_pos" subpass file="get_view_space_pos.jxs" inputs="1">
+            <input subpass="half_res_nor_depth" />
+        </subpass>    
+
+        //reproject previous direct+inderect
+        <subpass name="image" subpass file="past_frame_reprojection.jxs" inputs="3">
+            <input source="COLOR" />
+            <input subpass="composite" output="1" history="1" /> //***make sure this is the right outlet
+            <input source="VELOCITY" />
+        </subpass>
+
+        //calc half-res color
+        <subpass name="half_res_col" subpass file="downscale_blur.jxs" inputs="2">
+            <input subpass="half_res" />
+            <input subpass="image" />
+        </subpass> 
+
+//***************************************************//
+//             COMPUTE INDIRECT DIFFUSE              //
+//***************************************************//
+
+        //apply random permutation of the reservoir
+        <bind name="width" param="width" default="2" />
+        <subpass name="perm_reservoir" subpass file="reservoir_random_permutation.jxs" inputs="3" outputs="2">
+            <input subpass="clamp_reservoir_4" history="1" output="0" />
+            <input subpass="spatial_reuse_2" history="1" output="2" />
+            <input subpass="half_res_nor_depth" />
+        </subpass>
+
+        //neighbor clamping of the reservoir
+        <subpass name="clamp_reservoir_1" subpass file="clamp_reservoir_weights.jxs" inputs="1">
+            <input subpass="perm_reservoir" output="0" />
+        </subpass>
+
+        //fill the last plane of half-res color with horizontal vel
+        <subpass name="half_res_col_vel" subpass file="pack_hor_vel.jxs" inputs="2">
+            <input subpass="half_res_col" />
+            <input subpass="half_res_vel" />
+        </subpass>
+
+        //fill the last plane of reservoir pos with vertical vel
+        <subpass name="half_res_res_vel" subpass file="pack_ver_vel.jxs" inputs="2">
+            <input subpass="perm_reservoir" output="1" />
+            <input subpass="half_res_vel" />
+        </subpass>
+
+        //gather samples and apply temporal reuse of the reservoir
+        <subpass name="gather_and_temporal_reuse" subpass file="gather_samples_and_temporal_reuse.jxs" inputs="8" outputs"3">
+            <input subpass="half_res_col_vel" />
+            <input subpass="half_res_nor_depth" />
+            <input source="DEPTHS" /> //4 layers on depth
+            <input subpass="half_res_pos" />
+            <input subpass="clamp_reservoir_1" />
+            <input subpass="half_res_res_vel" />
+            <input source="ALBEDO" /> //albedo buffer
+            <input source="ENVIRONMENT" /> //environment map
+        </subpass>
+
+        //neighbor clamping of the reservoir
+        <subpass name="clamp_reservoir_2" subpass file="clamp_reservoir_weights.jxs" inputs="1">
+            <input subpass="gather_and_temporal_reuse" output="0" />
+        </subpass>
+
+        //first spatial reuse
+        <bind name="radius" param="radius" default="10" />
+        <bind name="num_samples" param="num_samples" default="8" />
+        <subpass name="spatial_reuse_1" subpass file="ReSTIR_spatial_reuse.jxs" inputs="8" outputs="2">
+            <input subpass="clamp_reservoir_2" />
+            <input subpass="gather_and_temporal_reuse" output="1" />
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input subpass="half_res_vel" />
+            <input subpass="half_res_pos" />
+            <input source="ALBEDO" />
+            <input source="ENVIRONMENT" />
+        </subpass>
+
+        //neighbor clamping of the reservoir
+        <subpass name="clamp_reservoir_3" subpass file="clamp_reservoir_weights.jxs" inputs="1">
+            <input subpass="spatial_reuse_1" output="0" />
+        </subpass>
+
+        //second spatial reuse
+        <bind name="radius" param="radius" default="10" />
+        <bind name="num_samples" param="num_samples" default="5" />
+        <subpass name="spatial_reuse_2" subpass file="ReSTIR_spatial_reuse.jxs" inputs="8" outputs="2">
+            <input subpass="clamp_reservoir_3" />
+            <input subpass="gather_and_temporal_reuse" output="1" />
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input subpass="half_res_vel" />
+            <input subpass="half_res_pos" />
+            <input source="ALBEDO" />
+            <input source="ENVIRONMENT" />
+        </subpass>
+
+        //neighbor clamping of the reservoir
+        <subpass name="clamp_reservoir_4" subpass file="clamp_reservoir_weights.jxs" inputs="1">
+            <input subpass="spatial_reuse_2" output="0" />
+        </subpass>
+
+        //short range SSAO
+        <bind name="radius" param="radius" default="0.3" />
+        <bind name="amnt" param="amnt" default="1.0" />
+        <subpass name="ao" subpass file="ssao_blue_noise.jxs" inputs="1">
+            <input subpass="nor_depth" />
+        </subpass>
+
+        //downscale ambient occlusion
+        <subpass name="half_res_ao" subpass file="downscale_blur.jxs" inputs="2">
+            <input subpass="half_res" />
+            <input subpass="ao" />
+        </subpass>  
+
+        //pack half-res albedo and ambient occlusion
+        <subpass name="half_res_alb_ao" subpass file="pack_alb_ao.jxs" inputs="2">
+            <input source="ALBEDO" />
+            <input subpass="half_res_ao" />
+        </subpass>
+
+        //resolve diffuse ReSTIR
+        <subpass name="diffuse" subpass file="ReSTIR_resolve.jxs" inputs="8">
+            <input source="COLOR" />
+            <input subpass="clamp_reservoir_4" />
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input source="DEPTHS" />
+            <input subpass="half_res_pos" />
+            <input subpass="half_res_alb_ao" />
+            <input source="ENVIRONMENT" />
+        </subpass>
+
+        //apply ao
+        <subpass name="diffuse_ao" subpass file="apply_ao.jxs" inputs="2">
+            <input subpass="diffuse" />
+            <input subpass="ao" />
+        </subpass>
+
+        //apply temporal filtering
+        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" default="1.0" />
+        <subpass name="diffuse_filtered" subpass file="temporalFilter.jxs" inputs="3">
+            <input subpass="diffuse_ao" />
+            <input source="VELOCITY" />
+            <input subpass="diffuse_filtered" history="1" />
+        </subpass>
+
+//***************************************************//
+//                 COMPUTE SPECULAR                  //
+//***************************************************//
+
+        //gather samples for reflections
+        <subpass name="gather_REF" subpass file="gather_samples_and_temporal_reuse_REF.jxs" inputs="8" outputs"3">
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input source="DEPTHS" /> //4 layers on depth
+            <input subpass="half_res_pos" />
+            <input subpass="spatial_reuse_REF_2 history="1" output="0" />
+            <input subpass="spatial_reuse_REF_2 history="1" output="2" />
+            <input source="ALBEDO" /> //albedo buffer
+            <input source="ENVIRONMENT" /> //environment map
+        </subpass>
+
+        //first spatial reuse
+        <bind name="radius" param="radius" default="5" />
+        <bind name="num_samples" param="num_samples" default="5" />
+        <subpass name="spatial_reuse_REF_1" subpass file="ReSTIR_spatial_reuse_REF.jxs" inputs="8" outputs="2">
+            <input subpass="gather_REF" output="0" />
+            <input subpass="gather_REF" output="1" />
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input subpass="half_res_vel" />
+            <input subpass="half_res_pos" />
+            <input source="ALBEDO" />
+            <input source="ENVIRONMENT" />
+        </subpass>
+
+        //second spatial reuse
+        <bind name="radius" param="radius" default="5" />
+        <bind name="num_samples" param="num_samples" default="5" />
+        <subpass name="spatial_reuse_REF_2" subpass file="ReSTIR_spatial_reuse_REF.jxs" inputs="8" outputs="2">
+            <input subpass="spatial_reuse_REF_1" output="0" />
+            <input subpass="spatial_reuse_REF_1" output="1" />
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input subpass="half_res_vel" />
+            <input subpass="half_res_pos" />
+            <input source="ALBEDO" />
+            <input source="ENVIRONMENT" />
+        </subpass>
+
+        //resolve specular ReSTIR
+        <subpass name="specular" subpass file="ReSTIR_resolve_REF.jxs" inputs="8">
+            <input source="COLOR" />
+            <input subpass="spatial_reuse_REF_2" />
+            <input subpass="half_res_col" />
+            <input subpass="half_res_nor_depth" />
+            <input subpass="half_res_vel" />
+            <input subpass="half_res_pos" />
+            <input source="ALBEDO" />
+            <input source="ENVIRONMENT" />
+        </subpass>
+
+        //apply temporal filtering
+        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" default="1.0" />
+        <subpass name="specular_filtered" subpass file="temporalFilter.jxs" inputs="3">
+            <input subpass="specular" />
+            <input source="VELOCITY" />
+            <input subpass="specular_filtered" history="1" />
+        </subpass>
+
+//***************************************************//
+//                    COMPOSITE                      //
+//***************************************************//
+
+        <subpass name="composite" subpass file="composite.jxs" inputs="5" outputs="2">
+            <input source="COLOR" />
+            <input subpass="diffuse_filtered" />
+            <input subpass="ao" />
+            <input source="ALBEDO" />
+            <input subpass="specular_filtered" />
+        </subpass>
+
+    </pass>
+</jitterpass>
