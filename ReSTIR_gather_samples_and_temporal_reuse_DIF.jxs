@@ -258,7 +258,7 @@ sample get_sample_pos_col(int index){
 
 sample get_environment_sample(in vec3 candidate_dir, inout uint seed){
 	sample s;
-	s.col = textureLod(environmentMap, (invV * vec4(candidate_dir, 0)).xyz, 2).rgb;
+	s.col = textureLod(environmentMap, (invV * vec4(candidate_dir, 0)).xyz, 1).rgb;
 	s.nor = candidate_dir;
 	//s.pos = s.nor;
 	return s;

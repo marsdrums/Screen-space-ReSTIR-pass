@@ -185,7 +185,7 @@ void main(void) {
 	} else {
 
 		vec3 best_dir = texelFetch(bestDirTex, ivec2(jit_in.uv)).xyz;
-		test_s = get_environment_sample(best_dir, seed);
+		test_s = get_environment_sample(best_dir, seed, this_s.rou);
 
 		//bool is_visible = (i % 3) == 0 ? visible_env(this_s, test_s, seed) : true;
 
@@ -217,7 +217,7 @@ void main(void) {
 		ivec2 randUVfull;
 		for(int i = 0; i < 1; i++){ //search for valid uvs (not outside the viewport);
 
-			float radius = 70*this_s.rou*this_s.rou + 0.2;//i == 0 ? 4 : 70*this_s.rou*this_s.rou + 0.2;
+			float radius = 70*this_s.rou*this_s.rou + 0.1;//i == 0 ? 4 : 70*this_s.rou*this_s.rou + 0.2;
 			float rand_radius = sqrt(RandomFloat01(seed));
    			float rand_angle = RandomFloat01(seed)*TWOPI;
    			vec3 disk = vec3(cos(rand_angle), sin(rand_angle), 0)*rand_radius*radius;///(-this_s.pos.z);
@@ -245,14 +245,14 @@ void main(void) {
 		vec4 reservoir = texelFetch(reservoirTex, randUV);
 		float angle_diff = dot(this_s.nor, texelFetch(norDepthTex, randUVfull).xyz);
 		float sample_depth = texelFetch(norDepthTex, randUVfull).w;
-		if(angle_diff < 1 - this_s.rou) continue;
+		if(angle_diff < (1 - this_s.rou*this_s.rou)) continue;
 
 		if(reservoir.y >= 0){ //if the sample is from the viewport
 
 			test_s = get_sample_pos_col_full_res(int(reservoir.y));
 
 			if(true /*visible(this_s, test_s, seed)*/){
-				float this_weight = angle_diff * ( 1 - saturate(this_s.rou*200*abs(this_s.depth - sample_depth)) );
+				float this_weight = angle_diff * ( 1 - saturate(2*abs(this_s.depth - sample_depth)*farClip) );
 				vec3 radiance = get_specular_radiance(this_s, test_s) * this_weight;// * max(0.5, dot(test_s.nor, this_s.nor));
 				float p_hat = luminance(radiance);
 				//p_hat /= get_pdf(this_s, test_s);
@@ -266,12 +266,12 @@ void main(void) {
 		} else {
 
 			vec3 best_dir = texelFetch(bestDirTex, randUV).xyz;
-			test_s = get_environment_sample(best_dir, seed);
+			test_s = get_environment_sample(best_dir, seed, this_s.rou);
 
 			//bool is_visible = (i % 3) == 0 ? visible_env(this_s, test_s, seed) : true;
 			bool is_visible = true;//visible_env(this_s, test_s, seed);
 			if(is_visible){
-				float this_weight = angle_diff * ( 1 - saturate(this_s.rou*200*abs(this_s.depth - sample_depth)) );
+				float this_weight = angle_diff * ( 1 - saturate(2*abs(this_s.depth - sample_depth)*farClip) );
 				vec3 radiance = get_radiance_for_env(this_s, test_s) * this_weight;// * max(0.5, dot(test_s.nor, this_s.nor));
 				float p_hat = luminance(radiance);
 				//if(p_hat <= 0)continue;

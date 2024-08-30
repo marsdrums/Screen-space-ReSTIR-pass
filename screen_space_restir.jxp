@@ -2,7 +2,7 @@
     <pass name="ReSTIR">
 
         <subpass name="dummy_half" file="through.jxs" inputs="1" dimscale="0.5 0.5">
-            <input source="COLOR" type="float16"/>
+            <input source="COLOR" />
         </subpass>
 
         <subpass name="DEPTHPEEL_half" file="downscale.jxs" inputs="2" outputs="1">
@@ -12,16 +12,16 @@
 
         <subpass name="ALBEDO_half" file="downscale.jxs" inputs="2" outputs="1">
             <input subpass="dummy_half" />
-            <input source="ALBEDO" type="char" erase_color="0 0 0 1"/>
+            <input source="ALBEDO"  erase_color="0 0 0 1"/>
         </subpass>
 
         <subpass name="NORMALS_half" file="downscale.jxs" inputs="2" outputs="1">
             <input subpass="dummy_half" />
-            <input source="NORMALS" type="float16" erase_color="0 0 0 1" />
+            <input source="NORMALS"  erase_color="0 0 0 1" />
         </subpass>
 
         <subpass name="VIEWPOS" file="get_view_space_pos.jxs" inputs="1" outputs="1">
-            <input source="NORMALS" type="float16" erase_color="0 0 0 1"/>
+            <input source="NORMALS"  erase_color="0 0 0 1"/>
         </subpass>
 
         <subpass name="VIEWPOS_half" file="downscale.jxs" inputs="2" outputs="1">
@@ -31,11 +31,11 @@
 
         <subpass name="ROUGHMETAL_half" file="downscale.jxs" inputs="2" outputs="1">
             <input subpass="dummy_half" />
-            <input source="ROUGHMETAL" type="char"/>
+            <input source="ROUGHMETAL" />
         </subpass>
 
         <subpass name="VELOCITY_WEIGHT" file="get_velocity_and_weight.jxs" inputs="2" outputs="1" >
-            <input source="VELOCITY" type="float16" />
+            <input source="VELOCITY"  />
             <input subpass="VELOCITY_WEIGHT_fdbk" history="1" output="0" />
         </subpass>
 
@@ -49,9 +49,9 @@
         </subpass>
 
         <subpass name="IMAGE" file="past_frame_reprojection.jxs" inputs="3" outputs="1">
-            <input source="COLOR" type="float16" erase_color="0 0 0 1"/>
+            <input source="COLOR"  erase_color="0 0 0 1"/>
             <input subpass="composite" history="1" output="1" />
-            <inout source="VELOCITY" type="float16" />
+            <inout source="VELOCITY" />
         </subpass>
 
         <subpass name="IMAGE_half" file="downscale.jxs" inputs="2" outputs="1">
@@ -100,9 +100,10 @@
             <input subpass="DIF_spatial_2" />
         </subpass>
 
-        <subpass name="random_reservoir_permutation" file="reservoir_random_permutation.jxs" inputs="2" outputs="2">
+        <subpass name="random_reservoir_permutation" file="reservoir_random_permutation.jxs" inputs="3" outputs="2">
             <input subpass="clamp_reservoir_1" />
             <input subpass="DIF_spatial_2" output="1" />
+            <input subpass="NORMALS_half" />
         </subpass>
 
         <subpass name="clamp_reservoir_2" file="clamp_reservoir_weights.jxs" inputs="1" outputs="1">
@@ -110,7 +111,7 @@
         </subpass>
 
         <subpass name="OCCLUSION" file="ssao.jxs" inputs="3" outputs="1">
-            <input source="NORMALS" type="float16" erase_color="0 0 0 1" />
+            <input source="NORMALS" erase_color="0 0 0 1" />
             <input source="DEPTHPEEL" />
             <input subpass="VIEWPOS" />
         </subpass>
@@ -119,10 +120,10 @@
             <input subpass="IMAGE" />
             <input subpass="clamp_reservoir_1" />
             <input subpass="DIF_spatial_2" output="1" />
-            <input source="NORMALS" type="float16" erase_color="0 0 0 1" />
+            <input source="NORMALS" erase_color="0 0 0 1" />
             <input source="DEPTHPEEL" />
             <input subpass="VIEWPOS" />
-            <input source="ALBEDO" type="char" />
+            <input source="ALBEDO" />
             <input source="ENVIRONMENT" />
             <input subpass="OCCLUSION" />
         </subpass>
@@ -154,7 +155,6 @@
         </subpass>
 
 
-
         <subpass name="REF_spatial" file="ReSTIR_spatial_reuse_REF.jxs" inputs="9" outputs="3">
             <input subpass="REF_gather_temporal" output="0" />
             <input subpass="REF_gather_temporal" output="1" />
@@ -171,14 +171,14 @@
             <input subpass="IMAGE" />
             <input subpass="REF_spatial" output="0" />
             <input subpass="REF_spatial" output="1" />
-            <input source="NORMALS" type="float16" erase_color="0 0 0 1" />
+            <input source="NORMALS" erase_color="0 0 0 1" />
             <input subpass="VIEWPOS" />
-            <input source="ALBEDO" type="char" />
+            <input source="ALBEDO" />
             <input source="ENVIRONMENT" />
-            <input source="ROUGHMETAL" type="char" />
+            <input source="ROUGHMETAL" />
         </subpass>
 
-        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" type="float" default="3.5" />
+        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" type="float" default="1.5" />
         <subpass name="REF_filtered" file="temporalFilter.jxs" inputs="3" outputs="1">
             <input subpass="REF_resolve" />
             <input subpass="VELOCITY_WEIGHT" />
@@ -190,19 +190,21 @@
         </subpass>
 
 
-
+        <bind name="background_enable" param="background_enable" type="float" default="1" />
+        <bind name="background_blur" param="background_blur" type="float" default="0.0" />
         <subpass name="background_fresnel" file="sample_environment.jxs" inputs="2" outputs="1">
-            <input source="NORMALS" type="float16" erase_color="0 0 0 1" />
+            <input source="NORMALS" erase_color="0 0 0 1" />
             <input source="ENVIRONMENT" />
         </subpass>
 
+
         <subpass name="composite" file="composite.jxs" inputs="7" outputs="2">
-            <input source="COLOR" type="float16" erase_color="0 0 0 1"/>
+            <input source="COLOR" erase_color="0 0 0 1"/>
             <input subpass="DIF_filtered" />
             <input subpass="OCCLUSION" />
-            <input source="ALBEDO" type="char" erase_color="0 0 0 1"/>
+            <input source="ALBEDO" erase_color="0 0 0 1"/>
             <input subpass="REF_filtered" />
-            <input source="ROUGHMETAL" type="char" erase_color="0 0 0 1"/>
+            <input source="ROUGHMETAL" erase_color="0 0 0 1"/>
             <input subpass="background_fresnel" />
         </subpass>
 

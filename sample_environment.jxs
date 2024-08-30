@@ -6,6 +6,8 @@
 	<param name="envTex" type="int" default="1" />
 	<param name="texcoord" type="vec2" state="TEXCOORD" />
 	<param name="textureMatrix0" type="mat4" state="TEXTURE0_MATRIX" />
+	<param name="background_enable" type="int" default="1" />
+	<param name="background_blur" type="float" default="0.0" />
 	<language name="glsl" version="1.5">
 		<bind param="farCorner" program="vp" />
 		<bind param="invV" program="vp" />
@@ -13,6 +15,8 @@
 		<bind param="envTex" program="fp" />
 		<bind param="texcoord" program="vp" />
 		<bind param="textureMatrix0" program="vp" />
+		<bind param="background_enable" program="fp" />
+		<bind param="background_blur" program="fp" />
 		<program name="vp" type="vertex"  >
 <![CDATA[
 #version 330 core
@@ -52,6 +56,8 @@ layout (location = 0) out vec4 outColor;
 
 uniform sampler2DRect norDepthTex;
 uniform samplerCube envTex;
+uniform int background_enable;
+uniform float background_blur;
 
 void main(void) {
 
@@ -61,7 +67,7 @@ void main(void) {
 		float F = pow(1.0 - cosine, 5.0);
 		outColor = vec4(0,0,0,F);
 	} else {
-	  	outColor = vec4(textureLod(envTex, normalize(jit_in.rayDir), 0).rgb, 0);
+	  	outColor = background_enable == 1 ? vec4(textureLod(envTex, normalize(jit_in.rayDir), background_blur).rgb, 0.0) : vec4(0.0);
 	}
 }
 ]]>
