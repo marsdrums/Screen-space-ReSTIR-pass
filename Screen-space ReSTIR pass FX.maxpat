@@ -40,6 +40,18 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-146",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 260.0, 60.0, 120.0, 22.0 ],
+					"text" : "displaylink 0, fps 120"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"attr" : "enable",
 					"id" : "obj-144",
 					"maxclass" : "attrui",
@@ -60,19 +72,6 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 635.0, 207.0, 357.0, 22.0 ],
 					"text" : "jit.gl.light node @type directional @direction 1 -1 1 @diffuse 0 0 0"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"attr" : "gamma_correction",
-					"id" : "obj-142",
-					"maxclass" : "attrui",
-					"numinlets" : 1,
-					"numoutlets" : 1,
-					"outlettype" : [ "" ],
-					"parameter_enable" : 0,
-					"patching_rect" : [ 377.0, 343.0, 150.0, 22.0 ]
 				}
 
 			}
@@ -399,7 +398,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 2,
 					"outlettype" : [ "jit_matrix", "" ],
-					"patching_rect" : [ 165.0, 454.0, 250.0, 22.0 ],
+					"patching_rect" : [ 37.5, 561.0, 250.0, 22.0 ],
 					"text" : "jit.gl.videoplane restir-ctx @transform_reset 2"
 				}
 
@@ -412,7 +411,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "jit_gl_texture", "", "" ],
-					"patching_rect" : [ 165.0, 397.0, 250.0, 22.0 ],
+					"patching_rect" : [ 37.5, 504.0, 250.0, 22.0 ],
 					"text" : "jit.gl.pass node @fxname gamma @quality hi",
 					"textfile" : 					{
 						"filename" : "gamma.jxp",
@@ -466,8 +465,8 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 484.0, 164.0, 752.0, 22.0 ],
-					"text" : "jit.gl.light node @type directional @direction 1 -1 1 @diffuse 30 20 10 @shadows 1 @shadowblur 0. @shadowrange 15. @shadowquality hi"
+					"patching_rect" : [ 484.0, 164.0, 732.0, 22.0 ],
+					"text" : "jit.gl.light node @type directional @direction 1 -1 1 @diffuse 3 2 1 @shadows 1 @shadowblur 0. @shadowrange 15. @shadowquality hi"
 				}
 
 			}
@@ -582,19 +581,6 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 23.0, 184.0, 226.0, 22.0 ],
 					"text_width" : 149.0
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"attr" : "tonemapping",
-					"id" : "obj-141",
-					"maxclass" : "attrui",
-					"numinlets" : 1,
-					"numoutlets" : 1,
-					"outlettype" : [ "" ],
-					"parameter_enable" : 0,
-					"patching_rect" : [ 333.5, 367.0, 150.0, 22.0 ]
 				}
 
 			}
@@ -767,22 +753,15 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-65", 0 ],
-					"source" : [ "obj-141", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-65", 0 ],
-					"source" : [ "obj-142", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
 					"destination" : [ "obj-12", 0 ],
 					"source" : [ "obj-144", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-1", 0 ],
+					"source" : [ "obj-146", 0 ]
 				}
 
 			}
@@ -890,7 +869,7 @@
 
 			}
  ],
-		"originid" : "pat-24",
+		"originid" : "pat-2",
 		"dependency_cache" : [  ],
 		"autosave" : 0
 	}

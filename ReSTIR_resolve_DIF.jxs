@@ -413,15 +413,21 @@ void main(void) {
 		//randUV = get_random_uv(seed, radius);
 		//randUV = ivec2(jit_in.uv) + uv_offset[i] + ivec2(RandomFloat01(seed) - 0.5, RandomFloat01(seed) - 0.5)*2;
 
-		bool background = texelFetch(norDepthTex, randUVfull).w >= 0.999;
-		if(randUV.x < 0 || randUV.y < 0 || randUV.x >= texDim.x || randUV.y >= texDim.y || background){
+		float sample_depth = texelFetch(norDepthTex, randUVfull).w; 
+		bool background = sample_depth == 0.0 || sample_depth == 1.0;
+		
+		if(	randUV.x < 0 || 
+			randUV.y < 0 || 
+			randUV.x >= texDim.x || 
+			randUV.y >= texDim.y || 
+			background){
 			continue;
 		}
 			
 		vec4 reservoir = texelFetch(reservoirTex, randUV);
 		float angle_diff = max(0.0, dot(this_s.nor, texelFetch(norDepthTex, randUVfull).xyz));
 		//angle_diff *= angle_diff;
-		float sample_depth = texelFetch(norDepthTex, randUVfull).w;
+		//float sample_depth = texelFetch(norDepthTex, randUVfull).w;
 		float sample_occ = texelFetch(occTex, randUVfull).r;
 		//if(angle_diff <= 0) continue;
 
@@ -498,6 +504,7 @@ void main(void) {
 
 	outColor.rgb /= weight;
 	outColor.rgb *= occlusion * 15;
+	//outColor = vec4(this_s.depth, this_s.depth, this_s.depth, 1.0);
 
 }
 ]]>

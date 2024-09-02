@@ -1,15 +1,18 @@
 <jittershader name="default">
 	<description>Default Slab </description>
-	<param name="colTex" type="int" default="0" filter="nearest" />
-	<param name="norDepthTex" type="int" default="1" filter="nearest" />
-	<param name="velTex" type="int" default="2" filter="nearest" />
-	<param name="posTex" type="int" default="3" filter="nearest" />
-	<param name="prev_reservoirTex" type="int" default="4" filter="nearest" />
-	<param name="prev_best_wposTex" type="int" default="5" filter="nearest" />
-	<param name="albTex" type="int" default="6" filter="nearest" />
-	<param name="environmentMap" type="int" default="7" filter="nearest" />
-	<param name="roughMetalTex" type="int" default="8" filter="nearest" />
-	<param name="depthsTex" type="int" default="9" filter="nearest" />
+	<param name="colTex" type="int" default="0" />
+	<param name="norDepthTex" type="int" default="1" />
+	<param name="velTex" type="int" default="2" />
+	<param name="posTex" type="int" default="3" />
+	<param name="prev_reservoirTex" type="int" default="4" />
+	<param name="prev_best_wposTex" type="int" default="5" />
+	<param name="albTex" type="int" default="6" />
+	<param name="environmentMap" type="int" default="7" />
+	<param name="roughMetalTex" type="int" default="8" />
+	<param name="depthsTex" type="int" default="9" />
+	<param name="noiseTex" type="int" default="10" />
+	<texture file="stbn_uvec2_null_scalar_tiled.png" type="float16" unit="10" rectangle="1" filter="nearest nearest" wrap="repeat repeat"/>
+
 	<param name="texDim" type="vec2" state="TEXDIM0" />
 	<param name="mapSize" type="vec2" state="TEXDIM7" />
 	<param name="prevMVP" type="mat4" state="PREV_MODELVIEW_PROJECTION_MATRIX" />
@@ -41,6 +44,7 @@
 		<bind param="environmentMap" program="fp" />
 		<bind param="roughMetalTex" program="fp" />
 		<bind param="depthsTex" program="fp" />
+		<bind param="noiseTex" program="fp" />
 		<bind param="prevMVP" program="fp" />
 		<bind param="farClip" program="fp" />
 		<bind param="farClip" program="vp" />
@@ -206,8 +210,24 @@ vec4 get_sample_uv_or_dir(in sample this_s, inout uint seed){
 
  	bool valid = false;
  	vec3 pivot;
+
+ 	const vec3 dither[8] = vec3[]	(		vec3(-1,-1,-1), 
+ 																		vec3(+1,-1,-1), 
+ 																		vec3(-1,+1,-1), 
+ 																		vec3(+1,+1,-1), 
+ 																		vec3(-1,-1,+1), 
+ 																		vec3(+1,-1,+1),
+ 																		vec3(-1,+1,+1), 
+ 																		vec3(+1,+1,+1));
+
+ 	float tile = mod(float(frame), 64);
+ 	vec2 warped_tile = vec2(mod(tile, 8), floor(tile / 8))*128;
+
+	int dither_index = int( mod(float(frame)+floor(texelFetch(noiseTex, ivec2(mod(jit_in.uv*2, 128) + warped_tile)).w*8), 8) );
+
  	for(int k = 0; k < 10; k++){
-			pivot = normalize(this_s.ref + randomUnitVector3(seed)*this_s.rou*this_s.rou); //***pick a better sample distribution!!!
+ 			vec3 test_dir = abs(randomUnitVector3(seed))*dither[dither_index];
+			pivot = normalize(this_s.ref + test_dir*this_s.rou*this_s.rou); //***pick a better sample distribution!!!
 			if( dot(pivot, this_s.nor) > 0 ){
 				valid = true;
 				break;

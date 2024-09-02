@@ -364,10 +364,13 @@ void main(void) {
 			if(	neiUV.x < 0 || neiUV.y < 0 || 
 				neiUV.x > texDim.x-1 || neiUV.y > texDim.y-1) continue;
 
-			vec3 candidateNor = texelFetch(norDepthTex, neiUV).xyz;
+			vec4 candidateNorDepth = texelFetch(norDepthTex, neiUV);
+
+			if(candidateNorDepth.w == 0.0 || candidateNorDepth.w == 1.0) continue;
+			
 			vec3 candidatePos = texelFetch(posTex, neiUV).xyz;
 
-			if(	dot(this_s.nor, candidateNor) < 0.95 
+			if(	dot(this_s.nor, candidateNorDepth.xyz) < 0.95 
 				 ||  length(this_s.pos - candidatePos) > 0.3 ) continue;
 
 

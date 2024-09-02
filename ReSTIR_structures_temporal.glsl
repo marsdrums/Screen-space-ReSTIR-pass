@@ -1,6 +1,6 @@
 #define M_PI 3.141592653589793238462643383279502884
 
-uniform sampler2DRect colTex, norDepthTex, velTex, posTex, prev_reservoirTex, prev_best_wposTex, albTex, roughMetalTex, depthsTex;
+uniform sampler2DRect colTex, norDepthTex, velTex, posTex, prev_reservoirTex, prev_best_wposTex, albTex, roughMetalTex, depthsTex, noiseTex;
 uniform samplerCube environmentMap;
 uniform int frame;
 uniform vec2 texDim, mapSize;

@@ -12,7 +12,7 @@ in jit_PerVertex {
 } jit_in;
 
 
-uniform sampler2DRect colTex, reservoirTex, bestDirTex, norDepthTex, posTex, albTex, roughMetalTex;
+uniform sampler2DRect colTex, reservoirTex, bestDirTex, norDepthTex, posTex, albTex, roughMetalTex, noiseTex;
 uniform samplerCube environmentMap;
 uniform int frame;
 uniform vec2 texDim, mapSize;

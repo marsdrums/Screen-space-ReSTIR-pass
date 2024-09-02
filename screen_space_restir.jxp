@@ -36,7 +36,7 @@
 
         <subpass name="VELOCITY_inflated" file="inflate_velocity.jxs" inputs="2" outputs="1" >
             <input source="VELOCITY" />
-            <input source="NORMALS" />
+            <input source="NORMALS" erase_color="0 0 0 1"/>
         </subpass>
 
         <subpass name="VELOCITY_WEIGHT" file="get_velocity_and_weight.jxs" inputs="2" outputs="1" >
@@ -55,7 +55,7 @@
 
         <subpass name="IMAGE" file="past_frame_reprojection.jxs" inputs="3" outputs="1">
             <input source="COLOR"  erase_color="0 0 0 1"/>
-            <input subpass="composite" history="1" output="1" />
+            <input subpass="composite_fdbk" history="1" />
             <inout source="VELOCITY" />
         </subpass>
 
@@ -63,6 +63,59 @@
             <input subpass="dummy_half" />
             <input subpass="IMAGE" />
         </subpass>
+
+
+
+
+        <subpass name="REF_gather_temporal" file="ReSTIR_gather_samples_and_temporal_reuse_REF.jxs" inputs="10" outputs="3">
+            <input subpass="IMAGE_half" />
+            <input subpass="NORMALS_half" />
+            <input subpass="VELOCITY_WEIGHT_half" />
+            <input subpass="VIEWPOS_half" />
+            <input subpass="REF_spatial" history="1" output="0" />
+            <input subpass="REF_spatial" history="1" output="1" />
+            <input subpass="ALBEDO_half" />
+            <input source="ENVIRONMENT" />
+            <input subpass="ROUGHMETAL_half" />
+            <input subpass="DEPTHPEEL_half" />
+        </subpass>
+
+
+        <subpass name="REF_spatial" file="ReSTIR_spatial_reuse_REF.jxs" inputs="9" outputs="3">
+            <input subpass="REF_gather_temporal" output="0" />
+            <input subpass="REF_gather_temporal" output="1" />
+            <input subpass="IMAGE_half" />
+            <input subpass="NORMALS_half" />
+            <input subpass="VELOCITY_WEIGHT_half" />
+            <input subpass="VIEWPOS_half" />
+            <input subpass="ALBEDO_half" />
+            <input source="ENVIRONMENT" />
+            <input subpass="ROUGHMETAL_half" />
+        </subpass>
+
+        <subpass name="REF_resolve" file="ReSTIR_resolve_REF.jxs" inputs="8" outputs="1">
+            <input subpass="IMAGE" />
+            <input subpass="REF_spatial" output="0" />
+            <input subpass="REF_spatial" output="1" />
+            <input source="NORMALS" erase_color="0 0 0 1" />
+            <input subpass="VIEWPOS" />
+            <input source="ALBEDO" />
+            <input source="ENVIRONMENT" />
+            <input source="ROUGHMETAL" />
+        </subpass>
+
+        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" type="float" default="1.5" />
+        <subpass name="REF_filtered" file="temporalFilter.jxs" inputs="3" outputs="1">
+            <input subpass="REF_resolve" />
+            <input subpass="VELOCITY_WEIGHT" />
+            <input subpass="REF_filtered_fdbk" history="1" output="0"/>
+        </subpass>
+
+        <subpass name="REF_filtered_fdbk" file="through.jxs" inputs="1" outputs="1">
+            <input subpass="REF_filtered" />
+        </subpass>
+
+
 
 
 
@@ -146,55 +199,6 @@
 
 
 
-        <subpass name="REF_gather_temporal" file="ReSTIR_gather_samples_and_temporal_reuse_REF.jxs" inputs="10" outputs="3">
-            <input subpass="IMAGE_half" />
-            <input subpass="NORMALS_half" />
-            <input subpass="VELOCITY_WEIGHT_half" />
-            <input subpass="VIEWPOS_half" />
-            <input subpass="REF_spatial" history="1" output="0" />
-            <input subpass="REF_spatial" history="1" output="1" />
-            <input subpass="ALBEDO_half" />
-            <input source="ENVIRONMENT" />
-            <input subpass="ROUGHMETAL_half" />
-            <input subpass="DEPTHPEEL_half" />
-        </subpass>
-
-
-        <subpass name="REF_spatial" file="ReSTIR_spatial_reuse_REF.jxs" inputs="9" outputs="3">
-            <input subpass="REF_gather_temporal" output="0" />
-            <input subpass="REF_gather_temporal" output="1" />
-            <input subpass="IMAGE_half" />
-            <input subpass="NORMALS_half" />
-            <input subpass="VELOCITY_WEIGHT_half" />
-            <input subpass="VIEWPOS_half" />
-            <input subpass="ALBEDO_half" />
-            <input source="ENVIRONMENT" />
-            <input subpass="ROUGHMETAL_half" />
-        </subpass>
-
-        <subpass name="REF_resolve" file="ReSTIR_resolve_REF.jxs" inputs="8" outputs="1">
-            <input subpass="IMAGE" />
-            <input subpass="REF_spatial" output="0" />
-            <input subpass="REF_spatial" output="1" />
-            <input source="NORMALS" erase_color="0 0 0 1" />
-            <input subpass="VIEWPOS" />
-            <input source="ALBEDO" />
-            <input source="ENVIRONMENT" />
-            <input source="ROUGHMETAL" />
-        </subpass>
-
-        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" type="float" default="1.5" />
-        <subpass name="REF_filtered" file="temporalFilter.jxs" inputs="3" outputs="1">
-            <input subpass="REF_resolve" />
-            <input subpass="VELOCITY_WEIGHT" />
-            <input subpass="REF_filtered_fdbk" history="1" output="0"/>
-        </subpass>
-
-        <subpass name="REF_filtered_fdbk" file="through.jxs" inputs="1" outputs="1">
-            <input subpass="REF_filtered" />
-        </subpass>
-
-
         <bind name="background_enable" param="background_enable" type="float" default="1" />
         <bind name="background_blur" param="background_blur" type="float" default="0.0" />
         <subpass name="background_fresnel" file="sample_environment.jxs" inputs="2" outputs="1">
@@ -213,8 +217,12 @@
             <input subpass="background_fresnel" />
         </subpass>
 
+        <subpass name="composite_fdbk" file="through.jxs" inputs="1" outputs="1" >
+            <input subpass="composite" output="1"/>
+        </subpass>     
+
         <subpass name="dummyOUT" file="through.jxs" inputs="1" outputs="1" >
-            <input subpass="DIF_filtered" output="0"/>
+            <input subpass="composite" output="0"/>
         </subpass>
 
     </pass>
