@@ -34,8 +34,13 @@
             <input source="ROUGHMETAL" />
         </subpass>
 
+        <subpass name="VELOCITY_inflated" file="inflate_velocity.jxs" inputs="2" outputs="1" >
+            <input source="VELOCITY" />
+            <input source="NORMALS" />
+        </subpass>
+
         <subpass name="VELOCITY_WEIGHT" file="get_velocity_and_weight.jxs" inputs="2" outputs="1" >
-            <input source="VELOCITY"  />
+            <input subpass="VELOCITY_inflated"  />
             <input subpass="VELOCITY_WEIGHT_fdbk" history="1" output="0" />
         </subpass>
 
@@ -209,7 +214,7 @@
         </subpass>
 
         <subpass name="dummyOUT" file="through.jxs" inputs="1" outputs="1" >
-            <input subpass="composite" output="0"/>
+            <input subpass="DIF_filtered" output="0"/>
         </subpass>
 
     </pass>
