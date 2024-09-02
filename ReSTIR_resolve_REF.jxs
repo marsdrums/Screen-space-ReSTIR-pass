@@ -236,6 +236,15 @@ void main(void) {
 			float rand_radius = sqrt(RandomFloat01(seed));
    			float rand_angle = RandomFloat01(seed)*TWOPI;
    			vec3 disk = vec3(cos(rand_angle), sin(rand_angle), 0)*rand_radius*radius;///(-this_s.pos.z);
+
+   			//vec3 lobe = normalize(this_s.ref + randomUnitVector3(seed)*this_s.rou)*(RandomFloat01(seed)*2 - 1)*radius*this_s.rou;
+			//lobe += this_s.pos;
+			//vec4 sample_proj = projmat * (vec4(lobe, 1));
+			//sample_proj.xy /= sample_proj.w;
+//
+			//vec2 sample_uv = vec2(textureMatrix0*vec4(sample_proj.xy*0.5 + 0.5, 0., 1.));
+			//ivec2 neiUV = ivec2(sample_uv);
+			
    			//vec2 signs = mod(floor(jit_in.uv) + float(frame*NUM_SAMPLES) + float(i), vec2(2))*2 - 1;
    			//disk.xy = abs(disk.xy) * signs; //apply bayer sampling
    			//disk = TBN * disk;

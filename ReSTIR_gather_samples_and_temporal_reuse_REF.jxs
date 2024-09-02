@@ -446,9 +446,10 @@ void main(void) {
 
 	ivec2 reprojected_uv = ivec2(this_s.uv - this_s.vel*texDim );
 
-	if(valid_reprojection(this_s, vec2(reprojected_uv))){
+	if(valid_reprojection(this_s, vec2(reprojected_uv))/){
 
 		vec4 prev_reservoir = texelFetch(prev_reservoirTex, reprojected_uv);
+		//prev_reservoir.w *= 0.2;
 		vec4 temporal_reservoir = vec4(0);
 
 		// combine current reservoir
@@ -458,7 +459,7 @@ void main(void) {
 		if(prev_reservoir.y >= 0){
 
 			vec4 lookup_prev_pos_id = texelFetch(prev_best_wposTex, reprojected_uv);
-			vec4 prev_best_wpos = projmat * vec4( (V * vec4(lookup_prev_pos_id.xyz, 1)).xyz, 1);
+			vec4 prev_best_wpos = projmat * vec4( (V * vec4(lookup_prev_pos_id.yzw, 1)).xyz, 1);
 			prev_best_wpos.xy /= prev_best_wpos.w;
 			prev_best_wpos.xy = prev_best_wpos.xy * 0.5 + 0.5;
 			vec2 prev_best_wpos_uv = floor((textureMatrix0 * vec4(prev_best_wpos.xy,1,1)).xy) + 0.5;// * texDim;
@@ -486,9 +487,9 @@ void main(void) {
 
 		} else {
 
-			vec3 prev_best_dir = texelFetch(prev_best_wposTex, reprojected_uv).xyz;
+			vec3 prev_best_dir = texelFetch(prev_best_wposTex, reprojected_uv).yzw;
 
-			test_s = get_environment_sample(prev_best_dir, seed);
+			test_s = get_environment_sample(prev_best_dir, seed, this_s.rou);
 
 			p_hat = length( get_radiance_for_env(this_s, test_s) );
 			//p_hat *= get_pdf(this_s, test_s);
@@ -506,10 +507,10 @@ void main(void) {
 		
 		if(temporal_reservoir.y >= 0){
 			test_s = get_sample(int(temporal_reservoir.y));
-			p_hat = luminance( get_specular_radiance(this_s, test_s) );			
+			p_hat = length( get_specular_radiance(this_s, test_s) );			
 		} else {
-			test_s = get_environment_sample(best_dir, seed);
-			p_hat = luminance( get_radiance_for_env(this_s, test_s) );
+			test_s = get_environment_sample(best_dir, seed, this_s.rou);
+			p_hat = length( get_radiance_for_env(this_s, test_s) );
 				
 		}
 		
@@ -534,6 +535,8 @@ void main(void) {
 			reservoir.w = p_hat > 0 ? (1/max(0.0001, p_hat)) * (reservoir.x / max(reservoir.z, 0.0001)) : 0.0;
 		}
 
+		outPhat = vec4( p_hat, (invV * vec4(test_s.pos, 1)).xyz);
+
 	} else { //if the sample is from the environment map
 
 		test_s = get_environment_sample(best_dir, seed, this_s.rou);
@@ -545,11 +548,12 @@ void main(void) {
 			p_hat = length( get_radiance_for_env(this_s, test_s) );
 			reservoir.w = p_hat > 0 ? (1/max(0.0001, p_hat)) * (reservoir.x / max(reservoir.z, 0.0001)) : 0.0;
 		}
+
+		outPhat = vec4(p_hat, best_dir);
 	}
 
 	outReservoir = reservoir;
-	outPhat = vec4(p_hat, best_dir);
-
+	
 }
 ]]>
 </program>

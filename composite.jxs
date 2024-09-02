@@ -72,15 +72,18 @@ void main(void) {
 	res += alb*occ*0.01; //add a touch of uniform ambient light
 	ind *= alb; //modulate indirect by albedo
 	res += ind; //add indirect
-	
-	outFdbk = vec4(res, 1.0); //output for secondary light bounces
 
-	res *= 1 - F;
+	outFdbk.a = 1.0;
+	outFdbk.rgb = mix(res, spe*0.3, rouMet.y);
+
 	res *= 1 - rouMet.y;
+	res *= 1 - F;
+
 	float rouFallBack = clamp((rouMet.x - 0.4)/0.6, 0.0, 1.0);
 	rouFallBack *= rouFallBack;
 	rouFallBack *= rouFallBack;
 	res += mix(spe, ind, rouFallBack); //mix between specular and indirect diffuse
+
 	res += bkg; //add background environment
 
 	outColor = vec4(res, 1.0);
