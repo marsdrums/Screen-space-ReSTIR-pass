@@ -112,8 +112,8 @@
             <input source="ROUGHMETAL" />
         </subpass>
 
-        <bind name="variance_clipping_gamma" param="variance_clipping_gamma" type="float" default="1.5" />
-        <subpass name="REF_filtered" file="temporalFilter.jxs" inputs="3" outputs="1">
+        <bind name="variance_clipping_gamma_REF" param="variance_clipping_gamma_REF" type="float" default="1.5" />
+        <subpass name="REF_filtered" file="temporalFilter_REF.jxs" inputs="3" outputs="1">
             <input subpass="REF_resolve" />
             <input subpass="VELOCITY_WEIGHT" />
             <input subpass="REF_filtered_fdbk" history="1" output="0"/>

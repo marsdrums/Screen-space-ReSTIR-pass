@@ -441,12 +441,12 @@ void main(void) {
 	vec3 best_dir;
 	vec4 reservoir = gather_samples(this_s, seed, p_hat, best_dir);
 
-
+/*
 	//TEMPORAL REUSE//____________________________________________________________
 
 	ivec2 reprojected_uv = ivec2(this_s.uv - this_s.vel*texDim );
 
-	if(valid_reprojection(this_s, vec2(reprojected_uv)) && frame > 0){
+	if(valid_reprojection(this_s, vec2(reprojected_uv)) && frame > 0 && texelFetch(velTex, ivec2(jit_in.uv)).b > 0.1){
 
 		vec4 prev_reservoir = texelFetch(prev_reservoirTex, reprojected_uv);
 		//prev_reservoir.w *= 0.2;
@@ -520,7 +520,7 @@ void main(void) {
 	}
 
 	//___________________________________________________________________________________________________________________________________________________________
-
+*/
 
 	if(reservoir.y >= 0){ //if the sample is from the viewport
 
